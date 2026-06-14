@@ -1,4 +1,4 @@
-# RetailAgent Application
+# RetailAgent — Full-Stack Contact Application
 
 A full-stack web application featuring a **Contact Us** page and a **Contacts List** page, built with Next.js (frontend) and NestJS (backend), backed by PostgreSQL.
 
@@ -22,7 +22,7 @@ A full-stack web application featuring a **Contact Us** page and a **Contacts Li
 1. Clone this repository:
    ```bash
    git clone <repository-url>
-   cd openagent-contact-app
+   cd retail-contact-app
    ```
 
 2. Start all services:
@@ -41,28 +41,40 @@ A full-stack web application featuring a **Contact Us** page and a **Contacts Li
 
 ### Running Locally (Without Docker)
 
+**Additional prerequisites:** [Node.js](https://nodejs.org/) 20+ and a running [PostgreSQL](https://www.postgresql.org/download/) 16 instance.
+
 #### Backend
 
-1. Ensure PostgreSQL is running locally with a database named `openagent`.
-  CLIENT_URL=http://localhost:3000
+1. Ensure PostgreSQL is running locally and create a database named `openagent`:
+   ```bash
+   createdb openagent
    ```
 
-2. Start the server:
+2. The server reads its database connection from environment variables (defaults shown below). Override them if your local setup differs:
+
+   | Variable | Default | Description |
+   |----------|---------|-------------|
+   | `DB_HOST` | `localhost` | PostgreSQL host |
+   | `DB_PORT` | `5432` | PostgreSQL port |
+   | `DB_USERNAME` | `postgres` | Database user |
+   | `DB_PASSWORD` | `postgres` | Database password |
+   | `DB_NAME` | `openagent` | Database name |
+   | `PORT` | `3001` | API server port |
+   | `CLIENT_URL` | `http://localhost:3000` | Allowed CORS origin |
+
+   > **Note:** The values above are **development defaults only**, intended for local testing. In production, use strong, unique credentials supplied via a secrets manager or an environment-specific `.env` file that is **never committed** to source control.
+
+3. Start the server:
    ```bash
    cd server
    npm install
    npm run start:dev
    ```
-   The API will be available at `http://localhost:3001`.
+   The API will be available at `http://localhost:3001/api/v1`.
 
 #### Frontend
 
-1. Create `client/.env.local`:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3001
-   ```
-
-2. Start the client:
+1. Start the client (defaults to calling the API at `http://localhost:3001`; override with `NEXT_PUBLIC_API_URL` if needed):
    ```bash
    cd client
    npm install
@@ -72,17 +84,20 @@ A full-stack web application featuring a **Contact Us** page and a **Contacts Li
 
 ## API Endpoints
 
+All endpoints are served under the global prefix `/api/v1`.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/contacts` | Create a new contact |
-| `GET` | `/contacts` | List all contacts (newest first) |
-| `PATCH` | `/contacts/:id` | Update a contact (e.g. mark as verified) |
-| `DELETE` | `/contacts/:id` | Delete a contact |
+| `POST` | `/api/v1/contacts` | Create a new contact |
+| `GET` | `/api/v1/contacts` | List all contacts (newest first, paginated) |
+| `PATCH` | `/api/v1/contacts/:id` | Update a contact (e.g. mark as verified) |
+| `DELETE` | `/api/v1/contacts/:id` | Delete a contact |
+| `GET` | `/api/v1/health` | Health check (database connectivity) |
 
 ### Example: Create a Contact
 
 ```bash
-curl -X POST http://localhost:3001/contacts \
+curl -X POST http://localhost:3001/api/v1/contacts \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "John",
@@ -91,6 +106,18 @@ curl -X POST http://localhost:3001/contacts \
     "phone": "0412345678",
     "note": "Looking for help with selling my property"
   }'
+```
+
+## Running Tests
+
+The backend includes a full suite of unit and end-to-end tests (Jest + Supertest). The tests mock the database, so no running PostgreSQL instance is required.
+
+```bash
+cd server
+npm install
+npm test          # unit tests
+npm run test:e2e  # end-to-end tests
+npm run test:cov  # unit tests with coverage report
 ```
 
 ## Project Structure
@@ -111,6 +138,12 @@ curl -X POST http://localhost:3001/contacts \
 │   ├── src/
 │   │   ├── main.ts
 │   │   ├── app.module.ts
+│   │   ├── common/
+│   │   │   └── pipes/
+│   │   │       └── sanitize.pipe.ts   # XSS sanitisation
+│   │   ├── health/
+│   │   │   ├── health.controller.ts
+│   │   │   └── health.module.ts
 │   │   └── contacts/
 │   │       ├── contact.entity.ts
 │   │       ├── contacts.controller.ts
@@ -118,7 +151,9 @@ curl -X POST http://localhost:3001/contacts \
 │   │       ├── contacts.module.ts
 │   │       └── dto/
 │   │           ├── create-contact.dto.ts
-│   │           └── update-contact.dto.ts
+│   │           ├── update-contact.dto.ts
+│   │           └── pagination-query.dto.ts
+│   ├── test/                          # End-to-end tests
 │   ├── Dockerfile
 │   └── package.json
 ├── docker-compose.yml
