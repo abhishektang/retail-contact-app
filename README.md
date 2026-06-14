@@ -1,4 +1,4 @@
-# Retai Application
+# Retail Application
 
 A full-stack web application featuring a **Contact Us** page and a **Contacts List** page, built with Next.js (frontend) and NestJS (backend), backed by PostgreSQL.
 
