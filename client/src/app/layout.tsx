@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OpenAgent - Contact Us",
-  description: "Get in touch with OpenAgent. We're here to help.",
+  title: "RetailAgent - Contact Us",
+  description: "Get in touch with RetailAgent. We're here to help.",
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-white">
         <Header />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1" role="main">{children}</main>
         <Footer />
       </body>
     </html>

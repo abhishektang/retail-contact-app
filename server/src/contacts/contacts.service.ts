@@ -4,6 +4,17 @@ import { Repository } from 'typeorm';
 import { Contact } from './contact.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
+
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 @Injectable()
 export class ContactsService {
@@ -17,10 +28,43 @@ export class ContactsService {
     return this.contactsRepository.save(contact);
   }
 
-  async findAll(): Promise<Contact[]> {
-    return this.contactsRepository.find({
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(
+    paginationQuery: PaginationQueryDto,
+  ): Promise<PaginatedResult<Contact>> {
+    const { page = 1, limit = 20, search, verified } = paginationQuery;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.contactsRepository
+      .createQueryBuilder('contact')
+      .orderBy('contact.createdAt', 'DESC');
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(contact.firstName ILIKE :search OR contact.lastName ILIKE :search OR contact.email ILIKE :search OR contact.phone ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (verified !== undefined) {
+      queryBuilder.andWhere('contact.isVerified = :isVerified', {
+        isVerified: verified === 'true',
+      });
+    }
+
+    const [data, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async update(

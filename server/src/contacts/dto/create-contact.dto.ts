@@ -4,19 +4,26 @@ import {
   IsNotEmpty,
   IsOptional,
   Matches,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateContactDto {
   @IsString()
   @IsNotEmpty({ message: 'First name is required' })
+  @MinLength(2, { message: 'First name must be at least 2 characters' })
+  @MaxLength(50, { message: 'First name must not exceed 50 characters' })
   firstName: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Last name is required' })
+  @MinLength(2, { message: 'Last name must be at least 2 characters' })
+  @MaxLength(50, { message: 'Last name must not exceed 50 characters' })
   lastName: string;
 
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
+  @MaxLength(255, { message: 'Email must not exceed 255 characters' })
   email: string;
 
   @IsString()
@@ -29,5 +36,6 @@ export class CreateContactDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(1000, { message: 'Note must not exceed 1000 characters' })
   note?: string;
 }
